@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>轴重量计算器（含键槽）</title>
+<title>轴重量计算器（圆轴/方轴/锥轴·内孔·键槽）</title>
 <style>
   :root{
     --bg:#0f1419; --panel:#1a212b; --panel2:#222b38; --line:#2e3a4a;
     --txt:#e6edf3; --muted:#8b98a9; --accent:#3fa7ff; --accent2:#4ade80;
-    --warn:#fbbf24; --segA:#3fa7ff; --segB:#5b8def; --danger:#f87171;
+    --warn:#fbbf24; --segA:#3fa7ff; --segB:#5b8def; --danger:#f87171; --bore:#a78bfa;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
     background:var(--bg);color:var(--txt);padding:18px;}
   h1{font-size:20px;margin:0 0 4px;font-weight:600;}
-  .sub{color:var(--muted);font-size:13px;margin-bottom:14px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.6;}
   .wrap{max-width:980px;margin:0 auto;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
   .card h2{font-size:14px;margin:0 0 12px;color:var(--accent);font-weight:600;letter-spacing:.5px;}
@@ -25,14 +25,25 @@
   .segtxt{fill:var(--txt);font-size:12px;text-anchor:middle;}
   .keyfill{fill:var(--panel2);stroke:var(--warn);stroke-width:1.2;}
   .keytxt{fill:var(--warn);font-size:11px;text-anchor:middle;font-weight:700;}
+  .boreline{stroke:var(--bore);stroke-width:1.2;stroke-dasharray:6 3;}
   .dim{stroke:var(--muted);stroke-width:1;}
   .dimtxt{fill:var(--muted);font-size:11px;text-anchor:middle;}
+  .legend{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;}
   /* 材料 */
   .mat-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
   .mat-row label{font-size:13px;color:var(--muted);}
   select,input{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
     border-radius:6px;padding:7px 9px;font-size:13px;outline:none;}
   select:focus,input:focus{border-color:var(--accent);}
+  /* 工具栏 / 方案库 */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .toolbar .btn{flex:0 0 auto;}
+  .lib-card .lib-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+  .lib-card select{min-width:200px;}
+  .lib-status{font-size:12px;margin-top:8px;min-height:1px;}
+  .lib-status.ok{color:var(--accent2);}
+  .lib-status.err{color:var(--danger);}
+  .lib-hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
   /* 分段块 */
   .seg-row{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
     padding:10px;margin-bottom:10px;}
@@ -40,17 +51,34 @@
   .seg-main .idx{background:var(--accent);color:#0f1419;font-weight:700;text-align:center;
     border-radius:6px;font-size:13px;height:34px;line-height:34px;width:34px;flex:0 0 auto;}
   .field{display:flex;flex-direction:column;gap:3px;}
-  .field label{font-size:11px;color:var(--muted);}
+  .field label{font-size:11px;color:var(--muted);white-space:nowrap;}
   .field input,.field select{width:100px;}
-  .wfield .w{font-size:13px;color:var(--accent2);height:34px;line-height:34px;min-width:90px;}
+  .seg-main .shape{width:112px;}
+  .wfield .w{font-size:13px;color:var(--accent2);height:34px;line-height:34px;min-width:96px;}
   .del{background:transparent;border:1px solid var(--danger);color:var(--danger);
     border-radius:6px;cursor:pointer;height:34px;width:34px;font-size:16px;line-height:1;flex:0 0 auto;}
   .del:hover{background:var(--danger);color:#0f1419;}
+  .row-btns{display:flex;gap:6px;flex:0 0 auto;}
+  .ins{background:transparent;border:1px solid var(--accent);color:var(--accent);
+    border-radius:6px;cursor:pointer;height:34px;width:34px;font-size:16px;line-height:1;flex:0 0 auto;}
+  .ins:hover{background:var(--accent);color:#0f1419;}
+  .reward-btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+  .reward-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .reward-tip{display:none;font-size:12px;color:var(--muted);margin:-6px 0 16px;line-height:1.8;word-break:break-all;}
+  .reward-tip.show{display:block;}
+  .reward-tip code{color:var(--accent);font-size:12px;}
+  .reward-tip .btn{padding:4px 10px;font-size:12px;margin-left:8px;}
+  .taper-info{font-size:11px;color:var(--muted);margin-top:4px;min-height:1px;}
+  /* 内孔行 */
+  .bore-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;
+    padding-top:10px;border-top:1px dashed var(--line);}
+  .bore-row .btitle{font-size:12px;color:var(--bore);height:34px;line-height:34px;}
+  .bore-row .bdeduct{font-size:12px;color:var(--bore);height:34px;line-height:34px;min-width:80px;}
   /* 键槽行 */
   .key-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:10px;
     padding-top:10px;border-top:1px dashed var(--line);}
   .key-row .ktitle{font-size:12px;color:var(--warn);height:34px;line-height:34px;}
-  .key-row .kdeduct{font-size:12px;color:var(--warn);height:34px;line-height:34px;}
+  .key-row .kdeduct{font-size:12px;color:var(--warn);height:34px;line-height:34px;min-width:80px;}
   .key-row.disabled{opacity:.45;}
   .btn{background:var(--accent);color:#0f1419;border:none;border-radius:8px;
     padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;}
@@ -61,22 +89,53 @@
   .total .big{font-size:34px;font-weight:700;color:var(--accent2);}
   .total .lbl{font-size:13px;color:var(--muted);}
   .total .sub2{font-size:13px;color:var(--muted);}
-  .note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px;}
+  .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px;}
   table.sum{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px;}
   table.sum th,table.sum td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:right;}
-  table.sum th{color:var(--muted);font-weight:500;}
+  table.sum th{color:var(--muted);font-weight:500;white-space:nowrap;}
   table.sum td:first-child,table.sum th:first-child{text-align:center;}
+  table.sum td:nth-child(2),table.sum th:nth-child(2),
+  table.sum td:nth-child(3),table.sum th:nth-child(3){text-align:center;}
+  /* modal */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .modal-mask.show{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;width:100%;max-width:380px;}
+  .modal h3{margin:0 0 14px;font-size:16px;color:var(--txt);}
+  .modal .field label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;}
+  .modal input{width:100%;}
+  .modal textarea{width:100%;height:130px;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font-size:11px;font-family:monospace;resize:vertical;outline:none;}
+  .modal textarea:focus{border-color:var(--accent);}
+  .m-btns{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+  .m-btns .btn{width:100%;}
+  .m-foot{display:flex;gap:10px;margin-top:6px;}
+  .m-foot .btn{flex:1;}
+  .notice{font-size:12px;margin-top:10px;line-height:1.5;min-height:1px;}
+  .notice.ok{color:var(--accent2);}
+  .notice.err{color:var(--danger);}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>轴重量计算器（含键槽）</h1>
-  <div class="sub">输入每段轴的直径与长度，分段可挂 A/B/C 型键槽并扣除相应重量；示意图随分段与键槽自动拼接更新（默认钢密度 7.85 g/cm³）。</div>
+  <h1>轴重量计算器</h1>
+  <div class="sub">分段支持 <b>圆轴 / 方轴 / 锥轴（推拔）</b>，可设置 <b>轴内孔</b>（孔径、孔深）与 <b>键槽</b>（仅圆轴）；示意图与重量自动更新（默认钢密度 7.85 g/cm³）。</div>
+  <div class="toolbar">
+    <button class="btn" id="btnSave">💾 保存参数</button>
+    <button class="btn ghost" id="btnImport">📂 导入参数</button>
+    <a class="btn ghost reward-btn" id="btnReward" href="https://sgc20261009.github.io/reward-support/" target="_blank" rel="noopener noreferrer">☕ 打赏支持</a>
+  </div>
+  <div class="reward-tip" id="rewardTip">
+    新窗口未能自动打开，请复制链接后粘贴到浏览器地址栏：
+    <code id="rewardUrl">https://sgc20261009.github.io/reward-support/</code>
+    <button class="btn ghost" id="rewardCopy">复制链接</button>
+  </div>
 
   <!-- 示意图 -->
   <div class="card">
-    <h2>示意图（自动拼接 · 黄色为键槽切口）</h2>
+    <h2>示意图（自动拼接）</h2>
     <svg id="diagram" viewBox="0 0 960 340" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="legend">
+      <b style="color:var(--segA)">■</b> 圆轴　<b style="color:#7fb3dd">▨</b> 方轴（斜纹）　<b style="color:var(--segB)">◺</b> 锥轴（梯形）　<b style="color:var(--bore)">┄</b> 内孔（紫虚线）　<b style="color:var(--warn)">▭</b> 键槽（黄色切口）
+    </div>
   </div>
 
   <!-- 材料 -->
@@ -98,6 +157,23 @@
     </div>
   </div>
 
+  <!-- 参数方案 -->
+  <div class="card lib-card">
+    <h2>本机方案库（保存 / 载入 / 删除 / 导出 / 导入）</h2>
+    <div class="lib-row">
+      <select id="libSelect"><option value="">— 未选择 —</option></select>
+      <button class="btn ghost" id="libLoad">载入</button>
+      <button class="btn ghost" id="libDel">删除</button>
+      <button class="btn ghost" id="libExport">导出文件</button>
+      <button class="btn ghost" id="libImport">导入文件</button>
+    </div>
+    <div class="lib-status" id="libStatus"></div>
+    <div class="lib-hint">
+      「载入」把所选方案填回计算器；「删除」移除所选方案；「导出文件」把所选方案存为 .json（未选则导出全部方案）；「导入文件」从 .json 把方案加回本机库（同名覆盖）。<br>
+      注：沙箱预览环境可能拦截下载，若导出无文件落盘，请用 Chrome / Edge 直接打开本文件重试；导入选文件即可，不受影响。
+    </div>
+  </div>
+
   <!-- 分段 -->
   <div class="card">
     <h2>分段参数（单位：mm）</h2>
@@ -106,115 +182,230 @@
       <button class="btn" id="add">+ 增加分段</button>
       <button class="btn ghost" id="reset">重置</button>
     </div>
+    <div class="lib-hint">
+      每段右侧「＋」= 在该段之后插入一段（自动编号顺延）；「×」= 删除该段；「+ 增加分段」= 在末尾追加一段。
+    </div>
   </div>
 
   <!-- 汇总 -->
   <div class="card">
-    <h2>计算结果（已扣除键槽）</h2>
+    <h2>计算结果（已扣除键槽与内孔）</h2>
     <div class="total">
       <div><div class="lbl">净重总计</div><div class="big" id="totalKg">0.000</div><div class="sub2">kg</div></div>
       <div><div class="lbl">净克重</div><div class="big" id="totalG" style="font-size:24px;color:var(--txt);">0.0</div><div class="sub2">g</div></div>
       <div><div class="lbl">键槽共扣除</div><div class="big" id="totalCut" style="font-size:24px;color:var(--warn);">0.0</div><div class="sub2">g</div></div>
+      <div><div class="lbl">内孔共扣除</div><div class="big" id="totalBore" style="font-size:24px;color:var(--bore);">0.0</div><div class="sub2">g</div></div>
       <div><div class="lbl">总长度</div><div class="big" id="totalL" style="font-size:24px;color:var(--txt);">0</div><div class="sub2">mm</div></div>
     </div>
     <table class="sum" id="sumtable">
-      <thead><tr><th>段</th><th>Ø(mm)</th><th>L(mm)</th><th>段体积(mm³)</th><th>键槽扣(g)</th><th>净重(g)</th></tr></thead>
+      <thead><tr><th>段</th><th>形状</th><th>尺寸</th><th>L(mm)</th><th>体积(mm³)</th><th>键槽扣(g)</th><th>内孔扣(g)</th><th>净重(g)</th></tr></thead>
       <tbody></tbody>
     </table>
     <div class="note">
-      单段体积 V = π × (Ø/2)² × L（mm³）；重量 = V × 密度(g/mm³)，密度 = g/cm³ ÷ 1000。<br>
-      键槽切除体积（b 键宽、t 槽深、Lk 槽长，单位 mm）：<br>
-      · B型(平头)：V = b·t·Lk<br>
-      · A型(双圆头)：V = b·t·(Lk − b + πb/4)（端部半圆头修正）<br>
-      · C型(单圆头)：V = b·t·(Lk − b/2 + πb/8)<br>
-      注：槽长超过所在段长度时按段长计；槽深超过半径(Ø/2)时按半径计。
+      单段体积 V：<br>
+      · 圆轴：V = π/4 · D² · L<br>
+      · 方轴：V = a² · L（a 为边长）<br>
+      · 锥轴（推拔）：V = π/12 · (D1² + D1·D2 + D2²) · L，锥度 = (D1 − D2) / L<br>
+      内孔扣除：V = π/4 · d² · h（h 为空或 0 视为通孔；孔径大于该段最小截面时按最小截面计）<br>
+      键槽切除体积（b 键宽、t 槽深、Lk 槽长，仅圆轴）：B型 V=b·t·Lk；A型 V=b·t·(Lk − b + πb/4)；C型 V=b·t·(Lk − b/2 + πb/8)<br>
+      净重 = (V − 键槽 − 内孔) × 密度，密度单位 g/mm³ = g/cm³ ÷ 1000
     </div>
   </div>
 </div>
 
-<script>
-let segs = []; // {dia, len, key:{type,b,L,t}|null}
+<!-- 保存参数弹窗 -->
+<div class="modal-mask" id="saveModal">
+  <div class="modal">
+    <h3>保存参数</h3>
+    <div class="field"><label>方案名称</label><input id="saveName" type="text" placeholder="如 阶梯轴A"></div>
+    <div class="field"><label>参数 JSON（可复制后自行保存）</label>
+      <textarea id="saveJson" readonly spellcheck="false"></textarea>
+    </div>
+    <div class="m-btns">
+      <button class="btn" id="saveCopy">📋 复制 JSON</button>
+      <button class="btn ghost" id="saveFsa" style="display:none">📁 选择位置保存（文件）</button>
+      <button class="btn ghost" id="saveDownload">⬇️ 下载 .json 文件</button>
+      <button class="btn ghost" id="saveLib">💾 存入本机方案库</button>
+    </div>
+    <div class="m-foot"><button class="btn ghost" id="saveCancel">取消</button></div>
+    <div class="notice" id="saveNotice"></div>
+  </div>
+</div>
 
+<script>
+let segs = []; // {shape:'round'|'taper'|'square', dia, dia2, side, len, bore:{d,h}, key:{type,b,L,t}|null}
+
+/* ---------- 读取 / 增删行 ---------- */
 function readRows(){
   segs = [];
   document.querySelectorAll('#rows .seg-row').forEach(r=>{
-    const d = parseFloat(r.querySelector('.dia').value);
-    const l = parseFloat(r.querySelector('.len').value);
+    const shape = r.querySelector('.shape').value;
+    const dia = parseFloat(r.querySelector('.dia').value);
+    const dia2 = parseFloat(r.querySelector('.dia2').value);
+    const side = parseFloat(r.querySelector('.side').value);
+    const len = parseFloat(r.querySelector('.len').value);
+    const bd = parseFloat(r.querySelector('.bore-d').value) || 0;
+    const bh = parseFloat(r.querySelector('.bore-h').value) || 0;
     const kt = r.querySelector('.ktype').value;
     let key = null;
-    if(kt!=='无'){
+    if(shape==='round' && kt!=='无'){
       key = {
         type: kt,
-        b: parseFloat(r.querySelector('.kb').value)||0,
-        L: parseFloat(r.querySelector('.kl').value)||0,
-        t: parseFloat(r.querySelector('.kt').value)||0
+        b: parseFloat(r.querySelector('.kb').value) || 0,
+        L: parseFloat(r.querySelector('.kl').value) || 0,
+        t: parseFloat(r.querySelector('.kt').value) || 0
       };
     }
-    segs.push({dia:isNaN(d)?0:d, len:isNaN(l)?0:l, key});
+    segs.push({
+      shape,
+      dia: isNaN(dia)?0:dia,
+      dia2: isNaN(dia2)?0:dia2,
+      side: isNaN(side)?0:side,
+      len: isNaN(len)?0:len,
+      bore: {d:bd, h:bh},
+      key
+    });
   });
 }
 
-function addRow(dia, len, key){
+function syncShape(row){
+  const shape = row.querySelector('.shape').value;
+  const fDia = row.querySelector('.f-dia');
+  const fDia2 = row.querySelector('.f-dia2');
+  const fSide = row.querySelector('.f-side');
+  const lbl = row.querySelector('.lbl-dia');
+  const ti = row.querySelector('.taper-info');
+  const kr = row.querySelector('.key-row');
+  fDia.style.display   = (shape==='square') ? 'none' : 'flex';
+  fDia2.style.display  = (shape==='taper')  ? 'flex' : 'none';
+  fSide.style.display  = (shape==='square') ? 'flex' : 'none';
+  lbl.textContent      = (shape==='taper') ? '大端 Ø' : '直径 Ø';
+  ti.style.display     = (shape==='taper') ? 'block' : 'none';
+  kr.style.display     = (shape==='round') ? 'flex' : 'none';
+}
+
+function addRow(seg, afterRow){
+  seg = seg || {};
+  const shape = seg.shape || 'round';
+  const bore = seg.bore || {};
+  const key = (seg.key && seg.key.type) ? seg.key : {type:'无', b:'', L:'', t:''};
   const rows = document.getElementById('rows');
   const i = rows.children.length + 1;
   const row = document.createElement('div');
   row.className = 'seg-row';
-  const k = key||{type:'无',b:'',L:'',t:''};
+  const dv = v => (v===0 || v) ? v : '';
   row.innerHTML = `
     <div class="seg-main">
       <div class="idx">${i}</div>
-      <div class="field"><label>直径 Ø</label><input class="dia" type="number" step="0.1" min="0" value="${dia??''}" placeholder="如 50"></div>
-      <div class="field"><label>长度 L</label><input class="len" type="number" step="1" min="0" value="${len??''}" placeholder="如 100"></div>
+      <div class="field"><label>形状</label>
+        <select class="shape">
+          <option value="round" ${shape==='round'?'selected':''}>圆轴</option>
+          <option value="taper" ${shape==='taper'?'selected':''}>锥轴(推拔)</option>
+          <option value="square" ${shape==='square'?'selected':''}>方轴</option>
+        </select>
+      </div>
+      <div class="field f-dia"><label class="lbl-dia">直径 Ø</label><input class="dia" type="number" step="0.1" min="0" value="${dv(seg.dia)}" placeholder="如 50"></div>
+      <div class="field f-dia2"><label>小端 Ø</label><input class="dia2" type="number" step="0.1" min="0" value="${dv(seg.dia2)}" placeholder="如 30"></div>
+      <div class="field f-side"><label>边长 a</label><input class="side" type="number" step="0.1" min="0" value="${dv(seg.side)}" placeholder="如 30"></div>
+      <div class="field"><label>长度 L</label><input class="len" type="number" step="1" min="0" value="${dv(seg.len)}" placeholder="如 100"></div>
       <div class="field wfield"><label>净重量</label><div class="w"></div></div>
-      <button class="del" title="删除该段">×</button>
+      <div class="row-btns">
+        <button class="ins" title="在该段之后插入一段">＋</button>
+        <button class="del" title="删除该段">×</button>
+      </div>
     </div>
-    <div class="key-row ${k.type==='无'?'disabled':''}">
+    <div class="taper-info"></div>
+    <div class="bore-row">
+      <div class="btitle">内孔：</div>
+      <div class="field"><label>孔径 Ø</label><input class="bore-d" type="number" step="0.1" min="0" value="${dv(bore.d)}" placeholder="0"></div>
+      <div class="field"><label>孔深 h（空/0=通孔）</label><input class="bore-h" type="number" step="1" min="0" value="${dv(bore.h)}" placeholder="通孔"></div>
+      <div class="bdeduct">扣: —</div>
+    </div>
+    <div class="key-row ${key.type==='无'?'disabled':''}">
       <div class="ktitle">键槽：</div>
       <div class="field"><label>槽型</label>
         <select class="ktype">
-          <option value="无" ${k.type==='无'?'selected':''}>无</option>
-          <option value="A" ${k.type==='A'?'selected':''}>A型(双圆头)</option>
-          <option value="B" ${k.type==='B'?'selected':''}>B型(平头)</option>
-          <option value="C" ${k.type==='C'?'selected':''}>C型(单圆头)</option>
+          <option value="无" ${key.type==='无'?'selected':''}>无</option>
+          <option value="A" ${key.type==='A'?'selected':''}>A型(双圆头)</option>
+          <option value="B" ${key.type==='B'?'selected':''}>B型(平头)</option>
+          <option value="C" ${key.type==='C'?'selected':''}>C型(单圆头)</option>
         </select>
       </div>
-      <div class="field"><label>键宽 b</label><input class="kb" type="number" step="0.5" min="0" value="${k.b}" placeholder="如 8"></div>
-      <div class="field"><label>槽长 Lk</label><input class="kl" type="number" step="1" min="0" value="${k.L}" placeholder="如 60"></div>
-      <div class="field"><label>槽深 t</label><input class="kt" type="number" step="0.1" min="0" value="${k.t}" placeholder="如 4"></div>
+      <div class="field"><label>键宽 b</label><input class="kb" type="number" step="0.5" min="0" value="${key.b??''}" placeholder="如 8"></div>
+      <div class="field"><label>槽长 Lk</label><input class="kl" type="number" step="1" min="0" value="${key.L??''}" placeholder="如 60"></div>
+      <div class="field"><label>槽深 t</label><input class="kt" type="number" step="0.1" min="0" value="${key.t??''}" placeholder="如 4"></div>
       <div class="kdeduct">扣: —</div>
     </div>`;
-  // 事件
-  row.querySelector('.del').addEventListener('click',()=>{ row.remove(); reindex(); refresh(); });
-  row.querySelectorAll('input,select').forEach(inp=>inp.addEventListener('input',refresh));
-  row.querySelector('.ktype').addEventListener('change',e=>{
+  row.querySelector('.del').addEventListener('click', ()=>{ row.remove(); reindex(); refresh(); });
+  row.querySelector('.ins').addEventListener('click', ()=>{
+    // 在该段之后插入一段（默认为圆轴，长度 50）
+    const nr = addRow({shape:'round', len:50}, row);
+    reindex(); refresh();
+    if(nr){
+      if(typeof nr.scrollIntoView==='function') nr.scrollIntoView({block:'nearest'});
+      const d = nr.querySelector('.shape').value==='square' ? nr.querySelector('.side') : nr.querySelector('.dia');
+      if(d) d.focus();
+    }
+  });
+  row.querySelectorAll('input,select').forEach(inp=>inp.addEventListener('input', refresh));
+  row.querySelector('.shape').addEventListener('change', ()=>{ syncShape(row); refresh(); });
+  row.querySelector('.ktype').addEventListener('change', e=>{
     const kr = row.querySelector('.key-row');
-    if(e.target.value==='无'){ kr.classList.add('disabled'); }
-    else { kr.classList.remove('disabled'); }
+    if(e.target.value==='无') kr.classList.add('disabled'); else kr.classList.remove('disabled');
     refresh();
   });
-  rows.appendChild(row);
+  if(afterRow && afterRow.parentNode===rows) rows.insertBefore(row, afterRow.nextSibling);
+  else rows.appendChild(row);
+  syncShape(row);
+  return row;
 }
 
 function reindex(){
-  document.querySelectorAll('#rows .seg-row').forEach((r,i)=>{
-    r.querySelector('.idx').textContent = i+1;
-  });
+  document.querySelectorAll('#rows .seg-row').forEach((r,i)=>{ r.querySelector('.idx').textContent = i+1; });
 }
 
-function getDensity(){ return parseFloat(document.getElementById('density').value)||0; }
+/* ---------- 几何计算 ---------- */
+function getDensity(){ return parseFloat(document.getElementById('density').value) || 0; }
 
-function segVolume(dia,len){ // mm³
-  if(dia<=0||len<=0) return 0;
-  return Math.PI * Math.pow(dia/2,2) * len;
+function maxDim(s){
+  if(s.shape==='square') return s.side;
+  if(s.shape==='taper') return Math.max(s.dia, s.dia2);
+  return s.dia;
+}
+function minDim(s){
+  if(s.shape==='square') return s.side;
+  if(s.shape==='taper') return Math.min(s.dia, s.dia2);
+  return s.dia;
 }
 
-// 键槽切除体积（已做端部圆头修正与几何约束）
-function keyVolume(dia, key){
+function segVolume(s){ // mm³
+  if(!s || s.len<=0) return 0;
+  if(s.shape==='square'){
+    if(s.side<=0) return 0;
+    return s.side * s.side * s.len;
+  }
+  if(s.shape==='taper'){
+    if(s.dia<=0 || s.dia2<=0) return 0;
+    return Math.PI/12 * (s.dia*s.dia + s.dia*s.dia2 + s.dia2*s.dia2) * s.len;
+  }
+  if(s.dia<=0) return 0;
+  return Math.PI/4 * s.dia*s.dia * s.len;
+}
+
+function boreVolume(s){ // mm³
+  if(!s || !s.bore || s.bore.d<=0 || s.len<=0) return 0;
+  const d = Math.min(s.bore.d, minDim(s));
+  if(d<=0) return 0;
+  const h = (s.bore.h>0) ? Math.min(s.bore.h, s.len) : s.len; // h=0 视为通孔
+  return Math.PI/4 * d*d * h;
+}
+
+function keyVolume(dia, key){ // mm³
   if(!key || key.type==='无') return 0;
-  let {b,L,t} = key;
-  if(b<=0||L<=0||t<=0) return 0;
+  let {b, L, t} = key;
+  if(b<=0 || L<=0 || t<=0) return 0;
   const r = dia/2;
-  if(t > r) t = r;            // 槽深不超过半径
+  if(t > r) t = r;
   let v;
   if(key.type==='B')      v = b*t*L;
   else if(key.type==='A') v = b*t*(L - b + Math.PI*b/4);
@@ -223,58 +414,80 @@ function keyVolume(dia, key){
   return Math.max(0, v);
 }
 
+/* ---------- 刷新 ---------- */
 function refresh(){
   readRows();
-  const rho = getDensity();          // g/cm³
-  const gPerMm3 = rho/1000;          // g/mm³
-  let totalG=0, totalCut=0, totalL=0;
+  const rho = getDensity();
+  const gPerMm3 = rho/1000;
+  let totalG=0, totalK=0, totalB=0, totalL=0;
   const tb = document.querySelector('#sumtable tbody');
-  tb.innerHTML='';
+  tb.innerHTML = '';
+
   segs.forEach((s,i)=>{
     const rowEl = document.querySelectorAll('#rows .seg-row')[i];
-    const segV = segVolume(s.dia,s.len);
-    // 键槽约束：槽长不超过段长
-    let key = s.key;
+    const segV = segVolume(s);
+
     let keyV = 0;
-    if(key && key.type!=='无'){
-      const Lk = Math.min(key.L, s.len>0?s.len:key.L);
-      key = {...key, L:Lk};
-      keyV = keyVolume(s.dia, key);
+    if(s.shape==='round' && s.key && s.key.type!=='无'){
+      keyV = keyVolume(s.dia, {...s.key, L: Math.min(s.key.L, s.len>0?s.len:s.key.L)});
     }
-    const netV = Math.max(0, segV - keyV);
-    const w = netV * gPerMm3;        // 净 g
-    const cut = keyV * gPerMm3;
-    totalG += w; totalCut += cut; totalL += s.len;
-    // 行内净重量
-    rowEl.querySelector('.w').textContent = (s.dia>0&&s.len>0)? w.toFixed(2)+' g' : '—';
-    // 行内扣除
-    const kd = rowEl.querySelector('.kdeduct');
-    kd.textContent = cut>0 ? '扣: '+cut.toFixed(2)+' g' : '扣: —';
+    const boreV = boreVolume(s);
+    const cutK = keyV * gPerMm3;
+    const cutB = boreV * gPerMm3;
+    const netV = Math.max(0, segV - keyV - boreV);
+    const w = netV * gPerMm3;
+
+    totalG += w; totalK += cutK; totalB += cutB; totalL += s.len;
+
+    const valid = s.len>0 && maxDim(s)>0;
+    rowEl.querySelector('.w').textContent = valid ? w.toFixed(2)+' g' : '—';
+    rowEl.querySelector('.bdeduct').textContent = cutB>0 ? '扣: '+cutB.toFixed(2)+' g' : '扣: —';
+    rowEl.querySelector('.kdeduct').textContent = (s.shape==='round' && cutK>0) ? '扣: '+cutK.toFixed(2)+' g' : '扣: —';
+
+    // 锥度信息（推拔度）
+    const ti = rowEl.querySelector('.taper-info');
+    if(ti){
+      if(s.shape==='taper' && s.dia>0 && s.dia2>0 && s.len>0){
+        const diff = s.dia - s.dia2;
+        ti.textContent = diff>0 ? ('锥度 1:'+(s.len/diff).toFixed(2)+'（大端→小端）')
+                        : diff<0 ? ('倒锥 1:'+(s.len/(-diff)).toFixed(2)+'（小端→大端）')
+                        : '锥度 0（等径）';
+      } else ti.textContent = '';
+    }
+
     // 汇总表
+    const shapeTxt = s.shape==='square' ? '方' : (s.shape==='taper' ? '锥' : '圆');
+    const sizeTxt  = s.shape==='square' ? ('□'+s.side)
+                   : s.shape==='taper'  ? ('Ø'+s.dia+'→'+s.dia2)
+                   : ('Ø'+s.dia);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${s.dia}</td><td>${s.len}</td>`+
+    tr.innerHTML = `<td>${i+1}</td><td>${shapeTxt}</td><td>${sizeTxt}</td><td>${s.len}</td>`+
       `<td>${segV?Math.round(segV).toLocaleString():'—'}</td>`+
-      `<td>${cut>0?cut.toFixed(2):'—'}</td>`+
-      `<td>${w>0?w.toFixed(2):'—'}</td>`;
+      `<td>${cutK>0?cutK.toFixed(2):'—'}</td>`+
+      `<td>${cutB>0?cutB.toFixed(2):'—'}</td>`+
+      `<td>${valid&&w>0?w.toFixed(2):'—'}</td>`;
     tb.appendChild(tr);
   });
+
   document.getElementById('totalKg').textContent = (totalG/1000).toFixed(3);
   document.getElementById('totalG').textContent = totalG.toFixed(1);
-  document.getElementById('totalCut').textContent = totalCut.toFixed(1);
-  document.getElementById('totalL').textContent = totalL;
+  document.getElementById('totalCut').textContent = totalK.toFixed(1);
+  document.getElementById('totalBore').textContent = totalB.toFixed(1);
+  document.getElementById('totalL').textContent = Math.round(totalL);
   drawDiagram();
 }
 
+/* ---------- 示意图 ---------- */
 function drawDiagram(){
   const svg = document.getElementById('diagram');
   const W=960, H=340;
-  const segsValid = segs.filter(s=>s.dia>0&&s.len>0);
-  if(segsValid.length===0){
-    svg.innerHTML = `<text x="${W/2}" y="${H/2}" class="dimtxt" style="font-size:14px">请在下方添加分段（直径、长度 > 0）</text>`;
+  const valid = segs.filter(s=>s.len>0 && maxDim(s)>0);
+  if(valid.length===0){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" class="dimtxt" style="font-size:14px">请在下方添加分段（尺寸、长度 &gt; 0）</text>`;
     return;
   }
-  const Ltot = segsValid.reduce((a,s)=>a+s.len,0);
-  const Dmax = Math.max(...segsValid.map(s=>s.dia));
+  const Ltot = valid.reduce((a,s)=>a+s.len,0);
+  const Dmax = Math.max(...valid.map(maxDim));
   const mX=70, mY=90;
   const useW = W - 2*mX;
   const useH = H - 2*mY;
@@ -282,44 +495,81 @@ function drawDiagram(){
   const sy = (useH/2) / Dmax;
   const cy = H/2;
   let x = mX;
-  let parts = `<line class="centerline" x1="0" y1="${cy}" x2="${W}" y2="${cy}"/>`;
+
+  let parts = `<defs>
+    <pattern id="sqhatch" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="9" height="9" fill="#2f5a86"/>
+      <line x1="0" y1="0" x2="0" y2="9" stroke="#7fb3dd" stroke-width="2.2"/>
+    </pattern>
+  </defs>`;
+  parts += `<line class="centerline" x1="0" y1="${cy}" x2="${W}" y2="${cy}"/>`;
+
   const dimY = H - 28;
   parts += `<line class="dim" x1="${mX}" y1="${dimY}" x2="${mX+Ltot*sx}" y2="${dimY}"/>`;
   parts += `<line class="dim" x1="${mX}" y1="${dimY-6}" x2="${mX}" y2="${dimY+6}"/>`;
   parts += `<line class="dim" x1="${mX+Ltot*sx}" y1="${dimY-6}" x2="${mX+Ltot*sx}" y2="${dimY+6}"/>`;
   parts += `<text class="dimtxt" x="${mX+Ltot*sx/2}" y="${dimY+18}">总长 ${Math.round(Ltot)} mm</text>`;
 
-  segsValid.forEach((s,i)=>{
-    const w = s.len*sx;
-    const h = s.dia*sy;
-    const y = cy - h/2;
-    const fill = (i%2===0)?'var(--segA)':'var(--segB)';
-    parts += `<rect class="seg" x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.92"/>`;
-    parts += `<text class="segtxt" x="${x+w/2}" y="${Math.max(y-8, 16)}">Ø${s.dia}</text>`;
-    const ltxt = `${Math.round(s.len)}`;
-    if(w>34){
-      parts += `<text class="segtxt" x="${x+w/2}" y="${cy+4}" style="fill:#0f1419;font-weight:600">${ltxt}</text>`;
-    }else{
-      parts += `<text class="dimtxt" x="${x+w/2}" y="${dimY-12}">${ltxt}</text>`;
+  valid.forEach((s,i)=>{
+    const w = s.len * sx;
+    const fill = (i%2===0) ? 'var(--segA)' : 'var(--segB)';
+    let topY;
+
+    if(s.shape==='square'){
+      const h = s.side * sy, y = cy - h/2; topY = y;
+      parts += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#sqhatch)" stroke="#3fa7ff" stroke-width="1.5"/>`;
+    } else if(s.shape==='taper'){
+      const h1 = s.dia * sy, h2 = s.dia2 * sy;
+      const y1 = cy - h1/2, y2 = cy - h2/2;
+      parts += `<polygon points="${x},${y1} ${x+w},${y2} ${x+w},${cy+h2/2} ${x},${cy+h1/2}" fill="${fill}" opacity="0.92" stroke="#0f1419" stroke-width="1.5"/>`;
+      topY = Math.min(y1, y2);
+    } else {
+      const h = s.dia * sy, y = cy - h/2; topY = y;
+      parts += `<rect class="seg" x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.92"/>`;
     }
-    // 键槽切口
-    if(s.key && s.key.type!=='无' && s.key.b>0 && s.key.t>0){
+
+    // 尺寸标注
+    let lab = s.shape==='square' ? ('□'+s.side)
+            : s.shape==='taper'  ? ('Ø'+s.dia+'→'+s.dia2)
+            : ('Ø'+s.dia);
+    parts += `<text class="segtxt" x="${x+w/2}" y="${Math.max(topY-8, 16)}">${lab}</text>`;
+
+    // 长度
+    if(w>40) parts += `<text class="segtxt" x="${x+w/2}" y="${cy+4}" style="fill:#0f1419;font-weight:600">${Math.round(s.len)}</text>`;
+    else     parts += `<text class="dimtxt" x="${x+w/2}" y="${dimY-12}">${Math.round(s.len)}</text>`;
+
+    // 内孔（紫色虚线）
+    if(s.bore && s.bore.d>0){
+      const bd = Math.min(s.bore.d, minDim(s));
+      const bh = bd * sy;
+      const dx = ((s.bore.h>0) ? Math.min(s.bore.h, s.len) : s.len) * sx;
+      const x1 = x + 2;
+      const x2 = Math.min(x + 2 + dx, x + w - 2);
+      parts += `<line class="boreline" x1="${x1}" y1="${cy-bh/2}" x2="${x2}" y2="${cy-bh/2}"/>`;
+      parts += `<line class="boreline" x1="${x1}" y1="${cy+bh/2}" x2="${x2}" y2="${cy+bh/2}"/>`;
+      if(s.bore.h>0 && s.bore.h < s.len){
+        parts += `<line class="boreline" x1="${x2}" y1="${cy-bh/2}" x2="${x2}" y2="${cy+bh/2}"/>`;
+      }
+    }
+
+    // 键槽（仅圆轴）
+    if(s.shape==='round' && s.key && s.key.type!=='无' && s.key.b>0 && s.key.t>0){
       const Lk = Math.min(s.key.L, s.len);
       const t = Math.min(s.key.t, s.dia/2);
-      let Lpx = Lk*sx;
-      Lpx = Math.min(Lpx, w-4);            // 不超过段宽
+      let Lpx = Math.min(Lk*sx, w-4);
       const depthPx = t*sy;
       const cx = x + w/2;
       const rEnd = Math.min((s.key.b/2)*sx, Lpx/2, depthPx);
-      parts += notchPath(cx, y, Lpx, depthPx, s.key.type, rEnd);
-      parts += `<text class="keytxt" x="${cx}" y="${y+depthPx/2+4}">${s.key.type}</text>`;
+      parts += notchPath(cx, topY, Lpx, depthPx, s.key.type, rEnd);
+      parts += `<text class="keytxt" x="${cx}" y="${topY+depthPx/2+4}">${s.key.type}</text>`;
     }
+
     x += w;
   });
   svg.innerHTML = parts;
 }
 
-// 生成键槽切口路径（填充背景色模拟切除），A双圆头 / C单圆头 / B平头
+// 键槽切口路径：A双圆头 / C单圆头 / B平头
 function notchPath(cx, yTop, Lpx, depthPx, type, r){
   const left = cx - Lpx/2, right = cx + Lpx/2;
   const bottom = yTop + depthPx;
@@ -327,14 +577,13 @@ function notchPath(cx, yTop, Lpx, depthPx, type, r){
   const pts = [];
   if(type==='B' || r<=0.5){
     pts.push([left,yTop],[right,yTop],[right,bottom],[left,bottom]);
-  }else if(type==='A'){
+  } else if(type==='A'){
     pts.push([left+r,yTop],[right-r,yTop]);
     for(let a=-90;a<=90;a+=15){const t=a*Math.PI/180;pts.push([right-r+r*Math.cos(t),mid+r*Math.sin(t)]);}
     pts.push([left+r,bottom]);
     for(let a=90;a<=270;a+=15){const t=a*Math.PI/180;pts.push([left+r+r*Math.cos(t),mid+r*Math.sin(t)]);}
-  }else if(type==='C'){
-    pts.push([left,yTop],[right,yTop],[right,bottom]);
-    pts.push([left,bottom]);
+  } else if(type==='C'){
+    pts.push([left,yTop],[right,yTop],[right,bottom],[left,bottom]);
     for(let a=90;a<=270;a+=15){const t=a*Math.PI/180;pts.push([left+r+r*Math.cos(t),mid+r*Math.sin(t)]);}
   }
   let d = 'M '+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
@@ -343,26 +592,244 @@ function notchPath(cx, yTop, Lpx, depthPx, type, r){
   return `<path class="keyfill" d="${d}"/>`;
 }
 
-// 事件
+/* ---------- 参数收集 / 还原 ---------- */
+function normalizeSeg(seg){
+  return {
+    shape: seg.shape || 'round',
+    dia: seg.dia, dia2: seg.dia2, side: seg.side, len: seg.len,
+    bore: seg.bore || {d:0, h:0},
+    key: seg.key || null
+  };
+}
+function collectState(name){
+  readRows();
+  return {
+    app:'shaft-weight-calculator', version:2,
+    name: name||'', savedAt:new Date().toISOString(),
+    density: getDensity(),
+    segs: segs.map(s=>({shape:s.shape, dia:s.dia, dia2:s.dia2, side:s.side, len:s.len, bore:s.bore, key:s.key}))
+  };
+}
+function applyState(s){
+  if(!s) return;
+  const matSel = document.getElementById('mat');
+  const dens = document.getElementById('density');
+  const d = (typeof s.density==='number') ? s.density : (parseFloat(s.density)||7.85);
+  dens.value = d;
+  let matched = false;
+  for(const opt of matSel.options){ if(parseFloat(opt.value)===d){ matSel.value = opt.value; matched = true; break; } }
+  if(!matched) matSel.value = 'custom';
+
+  const rows = document.getElementById('rows');
+  rows.innerHTML = '';
+  const arr = Array.isArray(s.segs) ? s.segs : [];
+  if(arr.length===0) addRow();
+  else arr.forEach(seg=>addRow(normalizeSeg(seg)));
+  reindex(); refresh();
+}
+function safeName(n){ n=(n||'').trim().replace(/[\\/:*?"<>|]/g,'_'); if(!n) n='轴重量方案'; return n; }
+function downloadBlob(blob, fname){
+  try{
+    if(!window.URL || typeof URL.createObjectURL!=='function') return false;
+    const a=document.createElement('a'); const url=URL.createObjectURL(blob);
+    a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    return true;
+  }catch(e){ return false; }
+}
+function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    try{
+      const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok;
+    }catch(e2){ return false; }
+  }
+}
+
+/* ---------- 材料 / 增删 / 重置 ---------- */
 document.getElementById('mat').addEventListener('change',e=>{
   if(e.target.value!=='custom') document.getElementById('density').value = e.target.value;
   refresh();
 });
-document.getElementById('density').addEventListener('input',refresh);
-document.getElementById('add').addEventListener('click',()=>{addRow();refresh();});
-document.getElementById('reset').addEventListener('click',()=>{
-  document.getElementById('rows').innerHTML='';
-  addRow(50,100,{type:'B',b:8,L:90,t:4});
-  addRow(30,60);
-  addRow(50,40,{type:'A',b:8,L:30,t:4});
+document.getElementById('density').addEventListener('input', refresh);
+document.getElementById('add').addEventListener('click', ()=>{
+  addRow({shape:'round', len:50});
   refresh();
 });
+function loadDemo(){
+  const rows = document.getElementById('rows');
+  rows.innerHTML = '';
+  addRow({shape:'round', dia:50, len:100, key:{type:'B',b:8,L:90,t:4}});
+  addRow({shape:'round', dia:30, len:60});
+  addRow({shape:'taper', dia:50, dia2:30, len:40, bore:{d:12,h:0}});
+  addRow({shape:'square', side:30, len:50});
+  refresh();
+}
+document.getElementById('reset').addEventListener('click', loadDemo);
 
-// 初始示例：含一个 B 型键槽
-addRow(50,100,{type:'B',b:8,L:90,t:4});
-addRow(30,60);
-addRow(50,40,{type:'A',b:8,L:30,t:4});
-refresh();
+/* ---------- 打赏支持 ---------- */
+const REWARD_URL = 'https://sgc20261009.github.io/reward-support/';
+const rewardTip = document.getElementById('rewardTip');
+document.getElementById('btnReward').addEventListener('click', e=>{
+  e.preventDefault();
+  let w = null;
+  try{ w = window.open(REWARD_URL, '_blank', 'noopener'); }catch(err){ w = null; }
+  if(w){ rewardTip.classList.remove('show'); return; }
+  // 新窗口被拦截（常见于沙箱预览）：给出可复制的链接
+  rewardTip.classList.add('show');
+});
+document.getElementById('rewardCopy').addEventListener('click', async()=>{
+  const btn = document.getElementById('rewardCopy');
+  const ok = await copyText(REWARD_URL);
+  btn.textContent = ok ? '✓ 已复制' : '复制失败，请手动选中';
+  setTimeout(()=>{ btn.textContent = '复制链接'; }, 1800);
+});
+
+/* ---------- 保存弹窗 ---------- */
+const saveModal = document.getElementById('saveModal');
+const saveName = document.getElementById('saveName');
+const saveNotice = document.getElementById('saveNotice');
+const saveJson = document.getElementById('saveJson');
+const saveFsaBtn = document.getElementById('saveFsa');
+
+function buildJson(){ return JSON.stringify(collectState(saveName.value||'轴重量方案'), null, 2); }
+function showSaveModal(){
+  saveNotice.textContent=''; saveNotice.className='notice';
+  saveName.value = '轴重量方案-'+new Date().toISOString().slice(0,10);
+  saveJson.value = buildJson();
+  saveFsaBtn.style.display = ('showSaveFilePicker' in window) ? 'block' : 'none';
+  saveModal.classList.add('show'); saveName.focus();
+}
+function hideSaveModal(){ saveModal.classList.remove('show'); }
+document.getElementById('btnSave').addEventListener('click', showSaveModal);
+document.getElementById('saveCancel').addEventListener('click', hideSaveModal);
+saveModal.addEventListener('click', e=>{ if(e.target===saveModal) hideSaveModal(); });
+saveName.addEventListener('input', ()=>{ saveJson.value = buildJson(); });
+
+document.getElementById('saveCopy').addEventListener('click', async()=>{
+  const ok = await copyText(saveJson.value);
+  if(ok){ saveNotice.className='notice ok'; saveNotice.textContent='✓ 已复制到剪贴板，可粘贴到记事本 / 文本文件保存'; }
+  else { saveNotice.className='notice err'; saveNotice.textContent='复制失败，请手动选中文本复制'; }
+});
+document.getElementById('saveFsa').addEventListener('click', async()=>{
+  const name = saveName.value||'轴重量方案';
+  const blob = new Blob([JSON.stringify(collectState(name),null,2)],{type:'application/json'});
+  try{
+    const handle = await window.showSaveFilePicker({
+      suggestedName: safeName(name)+'.json',
+      types:[{description:'JSON 参数文件',accept:{'application/json':['.json']}}]
+    });
+    const w = await handle.createWritable(); await w.write(blob); await w.close();
+    saveNotice.className='notice ok'; saveNotice.textContent='✓ 已保存到：'+handle.name;
+    setTimeout(hideSaveModal,1000);
+  }catch(e){ if(e.name==='AbortError') return;
+    saveNotice.className='notice err'; saveNotice.textContent='取消或失败，可改用「复制 JSON」保存'; }
+});
+document.getElementById('saveDownload').addEventListener('click', ()=>{
+  const name = saveName.value||'轴重量方案';
+  const blob = new Blob([JSON.stringify(collectState(name),null,2)],{type:'application/json'});
+  if(downloadBlob(blob, safeName(name)+'.json')){
+    saveNotice.className='notice ok'; saveNotice.textContent='✓ 已触发下载：'+safeName(name)+'.json';
+  } else {
+    saveNotice.className='notice err'; saveNotice.textContent='当前环境不支持下载（沙箱限制），请用「复制 JSON」或 Chrome/Edge 打开本文件';
+  }
+});
+document.getElementById('saveLib').addEventListener('click', ()=>{
+  const name = (saveName.value||'').trim();
+  if(!name){ saveNotice.className='notice err'; saveNotice.textContent='请填写方案名称'; return; }
+  const lib = getLib(); lib[name] = collectState(name);
+  if(setLib(lib)){ refreshLibSelect(name); saveNotice.className='notice ok'; saveNotice.textContent='✓ 已存入本机方案库：'+name; setTimeout(hideSaveModal,1000); }
+  else { saveNotice.className='notice err'; saveNotice.textContent='本机存储不可用（沙箱限制），请用复制 JSON'; }
+});
+
+/* ---------- 导入（应用到计算器） ---------- */
+document.getElementById('btnImport').addEventListener('click', doImport);
+async function doImport(){
+  const text = await readJsonFile();
+  if(text) loadFromText(text);
+}
+async function readJsonFile(){
+  if('showOpenFilePicker' in window){
+    try{
+      const [h] = await window.showOpenFilePicker({types:[{description:'JSON 参数文件',accept:{'application/json':['.json']}}]});
+      return await (await h.getFile()).text();
+    }catch(e){ if(e.name==='AbortError') return null; }
+  }
+  return await openFileDialog();
+}
+function openFileDialog(){
+  return new Promise(res=>{
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+    inp.onchange = ()=>{ const f=inp.files[0]; if(!f){res(null);return;}
+      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>res(null); r.readAsText(f); };
+    inp.click();
+  });
+}
+function loadFromText(text){
+  try{
+    const s = JSON.parse(text);
+    if(!s || !Array.isArray(s.segs)){ alert('文件格式不正确，无法导入'); return; }
+    applyState(s);
+  }catch(e){ alert('解析失败：'+e.message); }
+}
+
+/* ---------- 本机方案库 ---------- */
+const LIB_KEY = 'shaftCalcLib_v1';
+function getLib(){ try{ return JSON.parse(localStorage.getItem(LIB_KEY)||'{}'); }catch(e){ return {}; } }
+function setLib(o){ try{ localStorage.setItem(LIB_KEY, JSON.stringify(o)); return true; }catch(e){ return false; } }
+function refreshLibSelect(sel){
+  const sel2 = document.getElementById('libSelect'); const lib = getLib(); const names = Object.keys(lib);
+  sel2.innerHTML = '<option value="">— 未选择 —</option>'+names.map(n=>`<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+  if(sel) sel2.value = sel;
+}
+
+const libStatus = document.getElementById('libStatus');
+function libMsg(t,ok){ libStatus.textContent=t; libStatus.className='lib-status '+(ok?'ok':'err'); }
+
+document.getElementById('libLoad').addEventListener('click', ()=>{
+  const n = document.getElementById('libSelect').value; if(!n){ libMsg('请先在左侧选择要载入的方案',false); return; }
+  const lib = getLib(); if(lib[n]) applyState(lib[n]);
+});
+document.getElementById('libDel').addEventListener('click', ()=>{
+  const n = document.getElementById('libSelect').value; if(!n){ libMsg('请先选择要删除的方案',false); return; }
+  const lib = getLib(); delete lib[n]; setLib(lib); refreshLibSelect();
+  libMsg('已删除方案：'+n, true);
+});
+document.getElementById('libExport').addEventListener('click', ()=>{
+  const lib = getLib(); const names = Object.keys(lib);
+  if(names.length===0){ libMsg('本机方案库为空，没有可导出的方案',false); return; }
+  const sel = document.getElementById('libSelect').value;
+  let data, fname;
+  if(sel){ data = lib[sel]; fname = safeName(sel); }
+  else { data = {app:'shaft-weight-calculator-lib', version:2, exportedAt:new Date().toISOString(), entries:lib}; fname = '轴方案库-全部'; }
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  if(downloadBlob(blob, fname+'.json')) libMsg('已触发下载：'+fname+'.json', true);
+  else libMsg('当前环境不支持下载（沙箱限制）。请用 Chrome/Edge 打开本文件重试，或用「保存参数→复制 JSON」', false);
+});
+document.getElementById('libImport').addEventListener('click', async()=>{
+  const text = await readJsonFile();
+  if(!text) return;
+  let data;
+  try{ data = JSON.parse(text); }catch(e){ libMsg('解析失败：'+e.message,false); return; }
+  const lib = getLib();
+  let added=0, overwritten=0;
+  const put = (name,cfg)=>{ if(lib[name]) overwritten++; else added++; lib[name]=cfg; };
+  if(data && Array.isArray(data.segs) && data.app!=='shaft-weight-calculator-lib'){
+    const name = (data.name && String(data.name).trim()) ? String(data.name).trim() : ('导入方案-'+new Date().toISOString().slice(0,10));
+    put(name, {app:'shaft-weight-calculator', version:2, name:name, savedAt:data.savedAt||new Date().toISOString(), density:data.density, segs:data.segs.map(normalizeSeg)});
+  } else if(data && data.entries && typeof data.entries==='object'){
+    for(const [k,v] of Object.entries(data.entries)){ if(v && Array.isArray(v.segs)) put(k,v); }
+  } else { libMsg('文件格式不正确，无法导入到方案库',false); return; }
+  if(!setLib(lib)){ libMsg('本机存储不可用（沙箱限制），无法保存导入的方案',false); return; }
+  refreshLibSelect();
+  libMsg('导入完成：新增 '+added+' 个，覆盖 '+overwritten+' 个', true);
+});
+
+/* ---------- 初始化 ---------- */
+loadDemo();
+refreshLibSelect();
 </script>
 </body>
 </html>
